@@ -6,16 +6,6 @@ use std::io;
 use std::io::BufRead;
 use std::path::Path;
 
-enum ParserState {
-    ParsingMonth,
-    ParsingDay,
-    ParsingTime,
-    ParsingHostname,
-    ParsingProcess,
-    ParsingPID,
-    ParsingMessage,
-}
-
 fn main() -> io::Result<()> {
     let file_path = Path::new("./src/Mac_2k.log");
     let file = File::open(file_path)?;
@@ -152,6 +142,12 @@ mod tests {
     fn parse_an_invalid_day() {
         assert!(parse_day("0").is_err());
     }
+
+    #[test]
+    fn parse_a_valid_process_name() {
+        assert_eq!(parse_process_name_and_pid("com.apple.CDScheduler[43]:").unwrap(), ("com.apple.CDScheduler".to_string(), "43".to_string()));
+    }
+
 
     #[test]
     fn parse_a_valid_line() {

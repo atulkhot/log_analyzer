@@ -176,6 +176,26 @@ mod tests {
     }
 
     #[test]
+    fn parse_another_valid_line() {
+        let line = "Jul  8 06:11:46 calvisitor-10-105-162-124 WindowServer[184]: send_datagram_available_ping: pid 445 failed to act on a ping it dequeued before timing out.
+";
+        let (month,
+            day,
+            time,
+            hostname,
+            process,
+            pid,
+            message) = parse_record(line).unwrap();
+        assert_eq!(month, "Jul");
+        assert_eq!(day, "8");
+        assert_eq!(time, "06:11:46");
+        assert_eq!(hostname, "calvisitor-10-105-162-124");
+        assert_eq!(process, "WindowServer");
+        assert_eq!(pid, "184");
+        assert_eq!(message, "send_datagram_available_ping: pid 445 failed to act on a ping it dequeued before timing out.");
+    }
+
+    #[test]
     fn test_split_into_flds_str() {
         let input_record = "Jul  1 09:01:05 calvisitor-10-105-160-95 com.apple.CDScheduler[43]: Thermal pressure state: 1 Memory pressure state: 0";
         let (month_str, day_str, time_str, hostname_str, process_str, pid_str, message_str) =

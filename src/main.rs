@@ -84,7 +84,7 @@ fn main() -> io::Result<()> {
         top_hosts.iter().map(|&&(name, &count)| (name.clone(), count as usize)).collect(),
         top_processes.first().map(|&&(name, _)| name.clone()).unwrap_or_default(),
         top_hosts.first().map(|&&(name, _)| name.clone()).unwrap_or_default(),
-        top_keywords.iter().map(|&&(name, _)| name.clone()).collect(),
+        top_keywords.iter().map(|&&(name, _)| massage_keyword(name)).collect(),
     );
 
     println!("{:?}", summary);
@@ -92,6 +92,9 @@ fn main() -> io::Result<()> {
     Ok(())
 }
 
+fn massage_keyword(keyword: &str) -> String {
+    keyword.to_lowercase().chars().filter(|c| *c != ':').collect()
+}
 
 fn parse_record(
     input_record: &str,

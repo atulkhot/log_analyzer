@@ -92,6 +92,113 @@ fn main() -> io::Result<()> {
     Ok(())
 }
 
+
+fn parse_record(
+    input_record: &str,
+) -> Result<(String, String, String, String, String, String, String), String> {
+    let (month_str, day_str, time_str, hostname_str, process_str, pid_str, message_str) =
+        split_into_flds_str(input_record)?;
+    Ok((
+        month_str,
+        day_str,
+        time_str,
+        hostname_str,
+        process_str,
+        pid_str,
+        message_str,
+    ))
+}
+
+fn split_into_flds_str(
+    input_record: &str,
+) -> Result<(String, String, String, String, String, String, String), String> {
+    let mut parts = input_record.split_whitespace();
+    let month_str = parts
+        .next()
+        .ok_or("No month found".to_string())
+        .and_then(|m_str| parse_month(m_str))?;
+    let day_str = parts
+        .next()
+        .ok_or("No day found".to_string())
+        .and_then(|d_str| parse_day(d_str))?;
+    let time_str = parts
+        .next()
+        .ok_or("No time found".to_string())
+        .and_then(|t_str| parse_time(t_str))?;
+    let hostname_str = parts
+        .next()
+        .ok_or("No hostname found".to_string())
+        .and_then(|h_str| Ok(h_str.to_string()))?;
+    let (process_name_str, pid_str) = parts
+        .next()
+        .ok_or("No process found".to_string())
+        .and_then(|p| parse_process_name_and_pid(p))?;
+    let message_str = parts.collect::<Vec<_>>().join(" ");
+    Ok((
+        month_str,
+        day_str,
+        time_str,
+        hostname_str,
+        process_name_str,
+        pid_str,
+        message_str,
+    ))
+}
+
+fn parse_process_name_and_pid(process_name_str: &str) -> Result<(String, String), String> {
+    let parts = process_name_str.split('[').collect::<Vec<_>>();
+    if parts.len() == 2 {
+        Ok((
+            parts[0].into(),
+            parts[1]
+                .strip_suffix("]:")
+                .get_or_insert_default()
+                .to_string(),
+        ))
+    } else {
+        Err(format!("Invalid process string: {}", process_name_str))
+    }
+}
+
+fn parse_time(timestamp_str: &str) -> Result<String, String> {
+    let parts = timestamp_str.split(':').collect::<Vec<_>>();
+    if parts.len() == 3 {
+        for part in parts.iter() {
+            if part.len() != 2 {
+                return Err(format!("Invalid time format: {}", timestamp_str));
+            }
+            if part.parse::<u32>().is_err() {
+                return Err(format!("Invalid time - not a number: {}", timestamp_str));
+            }
+        }
+        Ok(format!("{}:{}:{}", parts[0], parts[1], parts[2]))
+    } else {
+        Err(format!("Invalid time: {}", timestamp_str))
+    }
+}
+
+fn parse_month(month_str: &str) -> Result<String, String> {
+    let set_of_months = HashSet::from([
+        "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec",
+    ]);
+    if set_of_months.contains(month_str.to_lowercase().as_str()) {
+        Ok(month_str.into())
+    } else {
+        Err(format!("Invalid month: {}", month_str))
+    }
+}
+
+fn parse_day(day_str: &str) -> Result<String, String> {
+    let day = day_str
+        .parse::<u32>()
+        .map_err(|_| format!("Invalid day: {}", day_str))?;
+    if day > 0 && day <= 31 {
+        Ok(day.to_string())
+    } else {
+        Err(format!("Invalid day: {}", day_str))
+    }
+}
+
 fn stopwords() -> Vec<&'static str> {
     vec![
         "0",
@@ -949,112 +1056,6 @@ fn stopwords() -> Vec<&'static str> {
         "youd",
         "youre",
     ]
-}
-
-fn parse_record(
-    input_record: &str,
-) -> Result<(String, String, String, String, String, String, String), String> {
-    let (month_str, day_str, time_str, hostname_str, process_str, pid_str, message_str) =
-        split_into_flds_str(input_record)?;
-    Ok((
-        month_str,
-        day_str,
-        time_str,
-        hostname_str,
-        process_str,
-        pid_str,
-        message_str,
-    ))
-}
-
-fn split_into_flds_str(
-    input_record: &str,
-) -> Result<(String, String, String, String, String, String, String), String> {
-    let mut parts = input_record.split_whitespace();
-    let month_str = parts
-        .next()
-        .ok_or("No month found".to_string())
-        .and_then(|m_str| parse_month(m_str))?;
-    let day_str = parts
-        .next()
-        .ok_or("No day found".to_string())
-        .and_then(|d_str| parse_day(d_str))?;
-    let time_str = parts
-        .next()
-        .ok_or("No time found".to_string())
-        .and_then(|t_str| parse_time(t_str))?;
-    let hostname_str = parts
-        .next()
-        .ok_or("No hostname found".to_string())
-        .and_then(|h_str| Ok(h_str.to_string()))?;
-    let (process_name_str, pid_str) = parts
-        .next()
-        .ok_or("No process found".to_string())
-        .and_then(|p| parse_process_name_and_pid(p))?;
-    let message_str = parts.collect::<Vec<_>>().join(" ");
-    Ok((
-        month_str,
-        day_str,
-        time_str,
-        hostname_str,
-        process_name_str,
-        pid_str,
-        message_str,
-    ))
-}
-
-fn parse_process_name_and_pid(process_name_str: &str) -> Result<(String, String), String> {
-    let parts = process_name_str.split('[').collect::<Vec<_>>();
-    if parts.len() == 2 {
-        Ok((
-            parts[0].into(),
-            parts[1]
-                .strip_suffix("]:")
-                .get_or_insert_default()
-                .to_string(),
-        ))
-    } else {
-        Err(format!("Invalid process string: {}", process_name_str))
-    }
-}
-
-fn parse_time(timestamp_str: &str) -> Result<String, String> {
-    let parts = timestamp_str.split(':').collect::<Vec<_>>();
-    if parts.len() == 3 {
-        for part in parts.iter() {
-            if part.len() != 2 {
-                return Err(format!("Invalid time format: {}", timestamp_str));
-            }
-            if part.parse::<u32>().is_err() {
-                return Err(format!("Invalid time - not a number: {}", timestamp_str));
-            }
-        }
-        Ok(format!("{}:{}:{}", parts[0], parts[1], parts[2]))
-    } else {
-        Err(format!("Invalid time: {}", timestamp_str))
-    }
-}
-
-fn parse_month(month_str: &str) -> Result<String, String> {
-    let set_of_months = HashSet::from([
-        "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec",
-    ]);
-    if set_of_months.contains(month_str.to_lowercase().as_str()) {
-        Ok(month_str.into())
-    } else {
-        Err(format!("Invalid month: {}", month_str))
-    }
-}
-
-fn parse_day(day_str: &str) -> Result<String, String> {
-    let day = day_str
-        .parse::<u32>()
-        .map_err(|_| format!("Invalid day: {}", day_str))?;
-    if day > 0 && day <= 31 {
-        Ok(day.to_string())
-    } else {
-        Err(format!("Invalid day: {}", day_str))
-    }
 }
 
 #[cfg(test)]

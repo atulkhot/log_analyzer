@@ -7,6 +7,7 @@ use std::io::BufRead;
 use std::path::Path;
 
 #[derive(Debug)]
+#[allow(dead_code)]
 struct Summary {
     total_entries: usize,
     by_process: Vec<(String, usize)>,
@@ -50,7 +51,7 @@ fn main() -> io::Result<()> {
     for line in lines {
         let line = line?;
         total_entries += 1;
-        if let Ok((month_str, day_str, time_str, hostname_str, process_str, pid_str, message_str)) =
+        if let Ok((_month_str, _day_str, _time_str, hostname_str, process_str, _pid_str, message_str)) =
             split_into_flds_str(line.as_str())
         {
             let process_score = process_freq.entry(process_str.to_string()).or_insert(0);
@@ -59,7 +60,7 @@ fn main() -> io::Result<()> {
             *host_score += 1;
             for keyword in message_str.split_whitespace() {
                 if !stop_words.contains(keyword) {
-                    let mut keyword_count =
+                    let keyword_count =
                         most_freq_keywords.entry(keyword.to_string()).or_insert(1);
                     *keyword_count += 1;
                 }

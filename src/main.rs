@@ -52,7 +52,7 @@ fn main() -> io::Result<()> {
         let line = line?;
         total_entries += 1;
         if let Ok((_month_str, _day_str, _time_str, hostname_str, process_str, _pid_str, message_str)) =
-            split_into_flds_str(line.as_str())
+            parse_log_entry(line.as_str())
         {
             let process_score = process_freq.entry(process_str.to_string()).or_insert(0);
             *process_score += 1;
@@ -97,7 +97,7 @@ fn massage_keyword(keyword: &str) -> String {
     keyword.to_lowercase().chars().filter(|c| *c != ':').collect()
 }
 
-fn split_into_flds_str(
+fn parse_log_entry(
     input_record: &str,
 ) -> Result<(String, String, String, String, String, String, String), String> {
     let mut parts = input_record.split_whitespace();
@@ -1081,7 +1081,7 @@ mod tests {
     #[test]
     fn parse_a_valid_line() {
         let line = "Jul  1 09:01:05 calvisitor-10-105-160-95 com.apple.CDScheduler[43]: Thermal pressure state: 1 Memory pressure state: 0";
-        let (month, day, time, hostname, process, pid, message) = split_into_flds_str(line).unwrap();
+        let (month, day, time, hostname, process, pid, message) = parse_log_entry(line).unwrap();
         assert_eq!(month, "Jul");
         assert_eq!(day, "1");
         assert_eq!(time, "09:01:05");
@@ -1098,7 +1098,7 @@ mod tests {
     fn parse_another_valid_line() {
         let line = "Jul  8 06:11:46 calvisitor-10-105-162-124 WindowServer[184]: send_datagram_available_ping: pid 445 failed to act on a ping it dequeued before timing out.
 ";
-        let (month, day, time, hostname, process, pid, message) = split_into_flds_str(line).unwrap();
+        let (month, day, time, hostname, process, pid, message) = parse_log_entry(line).unwrap();
         assert_eq!(month, "Jul");
         assert_eq!(day, "8");
         assert_eq!(time, "06:11:46");
@@ -1115,7 +1115,7 @@ mod tests {
     fn test_split_into_flds_str() {
         let input_record = "Jul  1 09:01:05 calvisitor-10-105-160-95 com.apple.CDScheduler[43]: Thermal pressure state: 1 Memory pressure state: 0";
         let (month_str, day_str, time_str, hostname_str, process_str, pid_str, message_str) =
-            split_into_flds_str(input_record).unwrap();
+            parse_log_entry(input_record).unwrap();
         assert_eq!(month_str, "Jul");
         assert_eq!(day_str, "1");
         assert_eq!(time_str, "09:01:05");
